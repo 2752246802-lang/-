@@ -1,0 +1,62 @@
+/* Keep the accordion interaction while giving each collapsed case a clear label. */
+.caseModuleIndex {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  max-width: 100%;
+  color: #fff;
+  transition: opacity 220ms ease, transform 320ms ease;
+}
+
+.caseModuleIndex > span:first-child {
+  flex: 0 0 auto;
+  font-size: 29px;
+  line-height: 1;
+  font-weight: 400;
+}
+
+.caseModuleStaticTitle {
+  overflow: hidden;
+  color: rgba(255, 255, 255, .88);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: opacity 220ms ease, transform 320ms ease;
+}
+
+.caseModuleCard img {
+  object-position: center 18%;
+  filter: grayscale(.45) saturate(.68) brightness(.58);
+  transform: scale(1.08);
+}
+
+.caseModuleCard:nth-child(2) img { object-position: 50% 12%; }
+.caseModuleCard:nth-child(3) img { object-position: 50% 10%; }
+.caseModuleCard:nth-child(4) img { object-position: 50% 8%; }
+
+.caseModuleShade {
+  background: linear-gradient(0deg, rgba(5, 7, 7, .94) 0%, rgba(5, 7, 7, .34) 68%, rgba(5, 7, 7, .5) 100%);
+  transition: background 380ms ease;
+}
+
+.caseModuleCard:hover img {
+  transform: scale(1.045);
+  filter: grayscale(0) saturate(.9) brightness(.88);
+}
+
+.caseModuleCard:hover .caseModuleShade {
+  background: linear-gradient(0deg, rgba(5, 7, 7, .94) 0%, rgba(5, 7, 7, .12) 62%, rgba(5, 7, 7, .2) 100%);
+}
+
+.caseModuleCard:hover .caseModuleIndex {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+@media (max-width: 620px) {
+  .caseModuleIndex { gap: 6px; }
+  .caseModuleIndex > span:first-child { font-size: 22px; }
+  .caseModuleStaticTitle { font-size: 10px; }
+}

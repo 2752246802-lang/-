@@ -1,0 +1,72 @@
+/* Profile capability cards: a compact editorial 2 × 2 grouping. */
+.profileMetrics {
+  grid-column: 1 / 6;
+  grid-row: 3;
+  align-self: end;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  width: min(100%, 560px);
+}
+
+.profileMetrics .profileMetric {
+  min-height: 112px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 18px 20px;
+  border: 1px solid #2a2b29;
+}
+
+.profileMetrics .profileMetric strong {
+  display: block;
+  max-width: 100%;
+  font-size: clamp(18px, 1.55vw, 29px);
+  line-height: 1.05;
+  font-weight: 600;
+  letter-spacing: -.045em;
+  white-space: nowrap;
+}
+
+.profileMetrics .profileMetric span {
+  display: block;
+  max-width: none;
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.profileMetrics .profileMetricDark {
+  color: #f3f1eb;
+  background: #2a2b29;
+}
+
+.profileMetrics .profileMetricLight {
+  color: #171817;
+  background: transparent;
+}
+
+.profileMetrics .profileMetricLight span { color: #535651; }
+
+@media (max-width: 620px) {
+  .profileMetrics {
+    order: 4;
+    width: 100%;
+    margin-top: 24px;
+    gap: 10px;
+  }
+
+  .profileMetrics .profileMetric {
+    min-height: 100px;
+    padding: 15px;
+  }
+
+  .profileMetrics .profileMetric strong {
+    font-size: clamp(16px, 4.5vw, 21px);
+  }
+
+  .profileMetrics .profileMetric span {
+    margin-top: 8px;
+    font-size: 10px;
+  }
+}

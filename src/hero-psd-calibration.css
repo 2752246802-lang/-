@@ -1,0 +1,40 @@
+/* Coordinates sampled from the updated 2048 × 1280 Hero PSD.
+   This stylesheet loads after styles.css and preserves the existing component
+   and responsive structure while calibrating the desktop composition. */
+@media (min-width: 768px) {
+  .heroNavigation { display: grid; z-index: 10; }
+
+  .heroLargeTitle {
+    left: 0;
+    top: 2px;
+    width: 2033px;
+    height: 678px;
+    z-index: 1;
+  }
+
+  .heroPerson {
+    left: 382px;
+    top: 45px;
+    width: 1230px;
+    height: 1845px;
+    z-index: 5;
+  }
+
+  .heroIntroCard { left: 202px; top: 380px; width: 544px; height: 408px; z-index: 3; }
+  .heroIntroCard > a { margin: 0; padding: 0; border-bottom: 0; }
+  .heroIntroCard .heroCardTag { left: -182px; top: 230px; width: 360px; height: 240px; }
+
+  .heroProjectPreviewCard { left: 1360px; top: 350px; width: 360px; height: 270px; z-index: 4; }
+  .heroProjectPreviewCard .heroCardTag { left: -170px; top: 120px; width: 360px; height: 240px; }
+
+  .heroMenuCard { left: 1305px; top: 623px; width: 440px; height: 550px; z-index: 4; }
+  .heroMenuCard .heroCardTag { left: 342px; top: 255px; width: 360px; height: 240px; }
+
+  .heroStatsCard { left: 257px; top: 823px; grid-template-columns: repeat(2, 195px); gap: 47px; z-index: 4; }
+  .heroStatsCard > div { min-height: 116px; padding: 18px; }
+  .heroStatsCard strong { font-size: 48px; }
+
+  .heroCameraDecoration { left: 250px; top: 990px; width: 470px; height: 240px; z-index: 6; }
+  .heroCameraDecoration .heroCamera { left: 0; top: 0; width: 240px; height: 240px; }
+  .heroCameraDecoration .heroCameraTag { left: 180px; top: 35px; width: 270px; height: 90px; }
+}

@@ -1,0 +1,117 @@
+/* Final contact panel: dark editorial finish with direct phone and WeChat routes. */
+.contactSection {
+  min-height: 100dvh;
+  padding: 64px 0 38px;
+  background:
+    radial-gradient(circle at 76% 42%, rgba(255, 255, 255, .03), transparent 26%),
+    repeating-linear-gradient(118deg, rgba(255, 255, 255, .014) 0 1px, transparent 1px 7px),
+    #121313;
+}
+
+.contactFrame { min-height: calc(100dvh - 102px); }
+
+.contactTopline {
+  padding-bottom: 20px;
+  color: rgba(241, 238, 230, .7);
+  font-size: 12px;
+  letter-spacing: .1em;
+}
+
+.contactTopline p { color: var(--accent); }
+
+.contactMain {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(310px, .48fr);
+  align-items: center;
+  gap: clamp(52px, 10vw, 190px);
+  padding: clamp(78px, 10vh, 142px) 18px clamp(62px, 8vh, 110px) 0;
+}
+
+.contactMain h2 {
+  max-width: none;
+  font-size: clamp(50px, 5.25vw, 92px);
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: .075em;
+}
+
+.contactMain h2 span { color: var(--accent); }
+
+.contactPhone {
+  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: clamp(54px, 7vh, 90px);
+  padding-bottom: 18px;
+  padding-right: 0;
+  padding-left: 0;
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  border-bottom: 2px solid var(--accent);
+  background: transparent;
+  color: #f3f1eb;
+  font-family: inherit;
+  text-align: left;
+  transition: color .2s ease, transform .2s ease;
+  cursor: pointer;
+}
+
+.contactPhone span { color: var(--accent); font-size: 14px; font-weight: 700; letter-spacing: .06em; }
+.contactPhone strong { font-size: clamp(34px, 3.1vw, 58px); line-height: 1; font-weight: 500; letter-spacing: .05em; }
+.contactPhone:hover { color: var(--accent); transform: translateY(-2px); }
+.contactPhone:focus-visible { outline: 2px solid var(--accent); outline-offset: 8px; }
+.contactCopy > p { margin-top: 20px; color: rgba(241, 238, 230, .58); font-size: 17px; }
+
+.contactQr { position: relative; z-index: 1; justify-self: end; width: min(100%, 370px); text-align: center; }
+.contactQrFrame {
+  padding: 18px;
+  border: 1px solid rgba(241, 238, 230, .28);
+  border-radius: 16px;
+  background: rgba(7, 8, 8, .38);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .025);
+}
+.contactQrFrame img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #f7f7f4; }
+.contactQr h3 { margin-top: 22px; font-size: 28px; font-weight: 500; }
+.contactQr p { margin-top: 10px; color: rgba(241, 238, 230, .58); font-size: 16px; }
+
+.contactFoot { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 28px; padding-top: 34px; }
+.contactDetails { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.contactDetails > div { min-width: 0; display: flex; flex-direction: column; gap: 8px; padding: 0 28px; border-right: 1px solid var(--accent); }
+.contactDetails > div:first-child { padding-left: 0; }
+.contactDetails > div:last-child { border-right: 0; }
+.contactDetails strong { color: var(--accent); font-size: 11px; letter-spacing: .08em; }
+.contactDetails span, .contactDetails a { overflow: hidden; color: #e8e7e1; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.contactDetails a:hover, .backTop:hover { color: var(--accent); }
+
+.backTop { border-bottom: 2px solid var(--accent); color: #f3f1eb; font-size: 18px; font-weight: 600; }
+.contactCopyright { margin-top: 44px; color: rgba(241, 238, 230, .46); font-size: 13px; text-align: center; }
+
+@media (max-width: 900px) {
+  .contactMain { grid-template-columns: minmax(0, 1fr) 270px; gap: 44px; padding-right: 0; }
+  .contactQr { width: 270px; }
+  .contactDetails > div { padding: 0 16px; }
+}
+
+@media (max-width: 620px) {
+  .contactSection { min-height: auto; padding: 42px 0 30px; }
+  .contactFrame { min-height: 0; }
+  .contactTopline { flex-direction: row; align-items: center; padding-bottom: 16px; font-size: 10px; }
+  .contactMain { grid-template-columns: 1fr; gap: 52px; padding: 68px 0 62px; }
+  .contactMain h2 { font-size: 47px; line-height: 1.14; }
+  .contactPhone { margin-top: 44px; padding-bottom: 14px; }
+  .contactPhone span { font-size: 12px; }
+  .contactPhone strong { font-size: 36px; }
+  .contactCopy > p { font-size: 14px; }
+  .contactQr { justify-self: center; width: min(100%, 290px); }
+  .contactQrFrame { padding: 13px; border-radius: 12px; }
+  .contactQr h3 { margin-top: 16px; font-size: 23px; }
+  .contactQr p { margin-top: 7px; font-size: 14px; }
+  .contactFoot { grid-template-columns: 1fr; padding-top: 26px; }
+  .contactDetails { grid-template-columns: 1fr; gap: 17px; }
+  .contactDetails > div { padding: 0 0 12px; border-right: 0; border-bottom: 1px solid rgba(241, 238, 230, .18); }
+  .contactDetails > div:last-child { border-bottom: 0; }
+  .backTop { justify-self: start; }
+  .contactCopyright { margin-top: 36px; font-size: 11px; }
+}
