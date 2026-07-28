@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Hero } from './components/Hero';
 import './styles.css';
@@ -35,6 +35,14 @@ function preloadImage(imageUrl) {
 
 function preloadImages(imageUrls) {
   imageUrls.forEach(preloadImage);
+}
+
+function runWhenIdle(callback, timeout = 1200) {
+  if (typeof window.requestIdleCallback === 'function') {
+    return window.requestIdleCallback(callback, { timeout });
+  }
+
+  return window.setTimeout(callback, timeout);
 }
 
 const assets = {
@@ -736,22 +744,12 @@ function WebsiteProjects() {
   );
 }
 
-function WorkLoading() {
-  return (
-    <main className="workLoading" role="status" aria-live="polite" aria-label="正在加载作品">
-      <div className="workLoadingContent">
-        <span className="workLoadingSpinner" aria-hidden="true" />
-        <p>正在加载作品...</p>
-      </div>
-    </main>
-  );
-}
-
 function ProgressiveSlices({ images, title, startImmediately = false }) {
   const [requestedCount, setRequestedCount] = useState(startImmediately ? 1 : 0);
   const [loadedIndexes, setLoadedIndexes] = useState(() => new Set());
   const containerRef = useRef(null);
   const sentinelRef = useRef(null);
+  const nextBatchScheduled = useRef(false);
 
   useEffect(() => {
     if (requestedCount || !containerRef.current) return undefined;
@@ -794,14 +792,23 @@ function ProgressiveSlices({ images, title, startImmediately = false }) {
     });
 
     if (index === 0) {
-      const nextBatch = images.slice(1, 3);
-      preloadImages(nextBatch);
-      setRequestedCount((currentCount) => Math.max(currentCount, Math.min(images.length, 3)));
+      if (nextBatchScheduled.current) return;
+      nextBatchScheduled.current = true;
+      runWhenIdle(() => {
+        preloadImages(images.slice(1, 3));
+        setRequestedCount((currentCount) => Math.max(currentCount, Math.min(images.length, 3)));
+      }, 1800);
     }
   };
 
   return (
     <div className="workImage workImage--sliced" ref={containerRef} aria-label={`${title} 完整长图`}>
+      {startImmediately && !loadedIndexes.has(0) && (
+        <div className="workImageLoading" role="status" aria-live="polite">
+          <span className="workImageLoadingSpinner" aria-hidden="true" />
+          <span>正在加载作品...</span>
+        </div>
+      )}
       {images.slice(0, requestedCount).map((image, index) => (
         <a
           className={`workImageSlice${loadedIndexes.has(index) ? ' is-loaded' : ''}`}
@@ -813,7 +820,7 @@ function ProgressiveSlices({ images, title, startImmediately = false }) {
           <img
             src={image}
             alt={`${title}（第 ${index + 1} 段）`}
-            loading={index < 3 ? 'eager' : 'lazy'}
+            loading={index === 0 ? 'eager' : 'lazy'}
             decoding="async"
             fetchPriority={index === 0 ? 'high' : 'auto'}
             onLoad={() => markImageLoaded(index)}
@@ -857,31 +864,6 @@ function WorkCategory({ module }) {
   const isMainImageModule = module.id === 'product-main-image';
   const domesticMainProjects = moduleProjects.filter((project) => project.market === 'domestic');
   const internationalMainProjects = moduleProjects.filter((project) => project.market === 'international');
-  const leadDetailImage = isMainImageModule ? null : moduleProjects.find((project) => project.images)?.images[0];
-  const [readyLeadImage, setReadyLeadImage] = useState(null);
-  const isPageLoading = Boolean(leadDetailImage && readyLeadImage !== leadDetailImage);
-
-  useLayoutEffect(() => {
-    if (!leadDetailImage) {
-      setReadyLeadImage(null);
-      return undefined;
-    }
-
-    const image = preloadImage(leadDetailImage);
-    const markReady = () => setReadyLeadImage(leadDetailImage);
-
-    if (image.complete) {
-      markReady();
-      return undefined;
-    }
-
-    image.addEventListener('load', markReady, { once: true });
-    image.addEventListener('error', markReady, { once: true });
-    return () => {
-      image.removeEventListener('load', markReady);
-      image.removeEventListener('error', markReady);
-    };
-  }, [leadDetailImage]);
 
   const returnToPreviousView = () => {
     if (window.history.length > 1) {
@@ -890,8 +872,6 @@ function WorkCategory({ module }) {
     }
     window.location.assign('./');
   };
-
-  if (isPageLoading) return <WorkLoading />;
 
   return (
     <main className="workPage">
