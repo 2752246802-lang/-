@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Hero } from './components/Hero';
 import './styles.css';
@@ -19,6 +19,22 @@ function getSlices(folderName) {
     .filter(([filePath]) => filePath.includes(`/${folderName}/`))
     .sort(([firstPath], [secondPath]) => firstPath.localeCompare(secondPath, 'zh-CN', { numeric: true }))
     .map(([, imageUrl]) => imageUrl);
+}
+
+const imagePreloadCache = new Map();
+
+function preloadImage(imageUrl) {
+  if (!imageUrl || imagePreloadCache.has(imageUrl)) return imagePreloadCache.get(imageUrl);
+
+  const image = new Image();
+  image.decoding = 'async';
+  image.src = imageUrl;
+  imagePreloadCache.set(imageUrl, image);
+  return image;
+}
+
+function preloadImages(imageUrls) {
+  imageUrls.forEach(preloadImage);
 }
 
 const assets = {
@@ -84,6 +100,11 @@ const assets = {
   wechatQr: new URL('../个人微信二维码.webp', import.meta.url).href,
   cameraSticker: new URL('../ai/camera-sticker.webp', import.meta.url).href,
 };
+
+const homepagePriorityImages = [
+  assets.waterPumpSlices[0],
+  assets.btTenMiniExcavatorSlices[0],
+];
 
 const profile = {
   name: '电商视觉设计师',
@@ -557,6 +578,21 @@ function App() {
   const selectedModuleId = new URLSearchParams(window.location.search).get('work');
   const selectedModule = caseModules.find((module) => module.id === selectedModuleId);
 
+  useEffect(() => {
+    if (selectedModule) return undefined;
+
+    const preloadPriorityImages = () => preloadImages(homepagePriorityImages);
+    const idleCallback = window.requestIdleCallback;
+
+    if (typeof idleCallback === 'function') {
+      const idleId = idleCallback(preloadPriorityImages, { timeout: 2500 });
+      return () => window.cancelIdleCallback?.(idleId);
+    }
+
+    const timeoutId = window.setTimeout(preloadPriorityImages, 1200);
+    return () => window.clearTimeout(timeoutId);
+  }, [selectedModule]);
+
   if (selectedModule) {
     return <WorkCategory module={selectedModule} />;
   }
@@ -700,6 +736,96 @@ function WebsiteProjects() {
   );
 }
 
+function WorkLoading() {
+  return (
+    <main className="workLoading" role="status" aria-live="polite" aria-label="正在加载作品">
+      <div className="workLoadingContent">
+        <span className="workLoadingSpinner" aria-hidden="true" />
+        <p>正在加载作品...</p>
+      </div>
+    </main>
+  );
+}
+
+function ProgressiveSlices({ images, title, startImmediately = false }) {
+  const [requestedCount, setRequestedCount] = useState(startImmediately ? 1 : 0);
+  const [loadedIndexes, setLoadedIndexes] = useState(() => new Set());
+  const containerRef = useRef(null);
+  const sentinelRef = useRef(null);
+
+  useEffect(() => {
+    if (requestedCount || !containerRef.current) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setRequestedCount(1);
+        observer.disconnect();
+      },
+      { rootMargin: '320px 0px' },
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, [requestedCount]);
+
+  useEffect(() => {
+    if (!loadedIndexes.has(0) || requestedCount < 3 || requestedCount >= images.length || !containerRef.current || !sentinelRef.current) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        setRequestedCount((currentCount) => Math.min(images.length, currentCount + 2));
+        observer.disconnect();
+      },
+      { root: containerRef.current, rootMargin: '360px 0px' },
+    );
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [images.length, loadedIndexes, requestedCount]);
+
+  const markImageLoaded = (index) => {
+    setLoadedIndexes((currentIndexes) => {
+      if (currentIndexes.has(index)) return currentIndexes;
+      const nextIndexes = new Set(currentIndexes);
+      nextIndexes.add(index);
+      return nextIndexes;
+    });
+
+    if (index === 0) {
+      const nextBatch = images.slice(1, 3);
+      preloadImages(nextBatch);
+      setRequestedCount((currentCount) => Math.max(currentCount, Math.min(images.length, 3)));
+    }
+  };
+
+  return (
+    <div className="workImage workImage--sliced" ref={containerRef} aria-label={`${title} 完整长图`}>
+      {images.slice(0, requestedCount).map((image, index) => (
+        <a
+          className={`workImageSlice${loadedIndexes.has(index) ? ' is-loaded' : ''}`}
+          href={image}
+          target="_blank"
+          rel="noreferrer"
+          key={image}
+        >
+          <img
+            src={image}
+            alt={`${title}（第 ${index + 1} 段）`}
+            loading={index < 3 ? 'eager' : 'lazy'}
+            decoding="async"
+            fetchPriority={index === 0 ? 'high' : 'auto'}
+            onLoad={() => markImageLoaded(index)}
+            onError={() => markImageLoaded(index)}
+          />
+        </a>
+      ))}
+      {requestedCount < images.length && <span className="workImageProgressSentinel" ref={sentinelRef} aria-hidden="true" />}
+    </div>
+  );
+}
+
 function WorkCategory({ module }) {
   const projectOrder = {
     'international-visual': [
@@ -731,6 +857,32 @@ function WorkCategory({ module }) {
   const isMainImageModule = module.id === 'product-main-image';
   const domesticMainProjects = moduleProjects.filter((project) => project.market === 'domestic');
   const internationalMainProjects = moduleProjects.filter((project) => project.market === 'international');
+  const leadDetailImage = isMainImageModule ? null : moduleProjects.find((project) => project.images)?.images[0];
+  const [readyLeadImage, setReadyLeadImage] = useState(null);
+  const isPageLoading = Boolean(leadDetailImage && readyLeadImage !== leadDetailImage);
+
+  useLayoutEffect(() => {
+    if (!leadDetailImage) {
+      setReadyLeadImage(null);
+      return undefined;
+    }
+
+    const image = preloadImage(leadDetailImage);
+    const markReady = () => setReadyLeadImage(leadDetailImage);
+
+    if (image.complete) {
+      markReady();
+      return undefined;
+    }
+
+    image.addEventListener('load', markReady, { once: true });
+    image.addEventListener('error', markReady, { once: true });
+    return () => {
+      image.removeEventListener('load', markReady);
+      image.removeEventListener('error', markReady);
+    };
+  }, [leadDetailImage]);
+
   const returnToPreviousView = () => {
     if (window.history.length > 1) {
       window.history.back();
@@ -738,6 +890,8 @@ function WorkCategory({ module }) {
     }
     window.location.assign('./');
   };
+
+  if (isPageLoading) return <WorkLoading />;
 
   return (
     <main className="workPage">
@@ -788,21 +942,10 @@ function WorkCategory({ module }) {
       ) : (
         <section className="workGallery shell" id="work-content" aria-label={module.title}>
           {moduleProjects.length ? (
-          moduleProjects.map((project) => (
+          moduleProjects.map((project, projectIndex) => (
             <article className={`workCard${project.images ? ' workCard--sliced' : ''}`} key={project.title}>
               {project.images ? (
-                <div className="workImage workImage--sliced" aria-label={`${project.title} 完整长图`}>
-                  {project.images.map((image, index) => (
-                    <a className="workImageSlice" href={image} target="_blank" rel="noreferrer" key={image}>
-                      <img
-                        src={image}
-                        alt={`${project.title}（第 ${index + 1} 段）`}
-                        loading={index === 0 ? 'eager' : 'lazy'}
-                        fetchPriority={index === 0 ? 'high' : 'auto'}
-                      />
-                    </a>
-                  ))}
-                </div>
+                <ProgressiveSlices images={project.images} title={project.title} startImmediately={projectIndex === 0} />
               ) : (
                 <a className="workImage" href={project.image} target="_blank" rel="noreferrer">
                   <img src={project.image} alt={project.title} />

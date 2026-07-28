@@ -321,8 +321,14 @@ p, h1, h2, h3, figure { margin: 0; }
 .workCard { min-width: 0; }
 .workImage--sliced { overflow-y: auto; background: #f5f5f2; }
 .workImage--sliced::after { content: "滚动查看完整案例"; }
-.workImageSlice { display: block; }
-.workImageSlice img { display: block; min-height: 0; object-fit: contain; }
+.workImageSlice { display: block; min-height: 180px; background: #dedfdb; }
+.workImageSlice img { display: block; min-height: 0; object-fit: contain; opacity: 0; transition: opacity .4s ease; }
+.workImageSlice.is-loaded img { opacity: 1; }
+.workImageProgressSentinel { display: block; height: 1px; }
+.workLoading { min-height: 100dvh; display: grid; place-items: center; background: #f5f5f5; color: #171817; }
+.workLoadingContent { display: grid; justify-items: center; gap: 16px; font-size: 13px; letter-spacing: .08em; }
+.workLoadingSpinner { width: 34px; height: 34px; border: 2px solid #c7c8c3; border-top-color: var(--accent); border-radius: 50%; animation: workLoadingSpin .8s linear infinite; }
+@keyframes workLoadingSpin { to { transform: rotate(360deg); } }
 .workMeta { padding-top: 20px; }
 .projectLabel { display: flex; gap: 12px; color: var(--accent); font-size: 11px; letter-spacing: .08em; }
 .projectLabel span + span::before { content: "/"; margin-right: 12px; color: var(--faint); }
