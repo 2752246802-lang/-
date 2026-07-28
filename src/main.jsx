@@ -627,7 +627,7 @@ function App() {
     let minimumTimer;
 
     const finishLoading = () => {
-      const remainingTime = Math.max(0, 500 - (Date.now() - startedAt));
+      const remainingTime = Math.max(0, 3000 - (Date.now() - startedAt));
       minimumTimer = window.setTimeout(() => setShowHomepageLoading(false), remainingTime);
     };
 
@@ -789,9 +789,9 @@ function WebsiteProjects() {
 
 function WorkLoading() {
   return (
-    <main className="workLoading" role="status" aria-live="polite" aria-label="正在加载作品">
-      <div className="workLoadingContent">
-        <span className="workLoadingSpinner" aria-hidden="true" />
+    <main className="homepageLoading" role="status" aria-live="polite" aria-label="正在加载作品">
+      <div className="homepageLoadingContent">
+        <span className="homepageLoadingSpinner" aria-hidden="true" />
         <p>正在加载作品...</p>
       </div>
     </main>
@@ -923,7 +923,8 @@ function WorkCategory({ module }) {
   const isMainImageModule = module.id === 'product-main-image';
   const domesticMainProjects = moduleProjects.filter((project) => project.market === 'domestic');
   const internationalMainProjects = moduleProjects.filter((project) => project.market === 'international');
-  const leadDetailImage = isMainImageModule ? null : moduleProjects.find((project) => project.images)?.images[0];
+  const firstProjectWithImage = moduleProjects.find((project) => project.images?.length || project.image);
+  const leadDetailImage = firstProjectWithImage?.images?.[0] ?? firstProjectWithImage?.image;
   const [leadImageReady, setLeadImageReady] = useState(false);
   const [minimumLoadingElapsed, setMinimumLoadingElapsed] = useState(false);
   const showLoading = Boolean(leadDetailImage && (!leadImageReady || !minimumLoadingElapsed));
@@ -934,7 +935,7 @@ function WorkCategory({ module }) {
     setLeadImageReady(false);
     setMinimumLoadingElapsed(false);
 
-    const minimumTimer = window.setTimeout(() => setMinimumLoadingElapsed(true), 500);
+    const minimumTimer = window.setTimeout(() => setMinimumLoadingElapsed(true), 3000);
     const image = preloadImage(leadDetailImage);
     const markLeadReady = () => setLeadImageReady(true);
 
