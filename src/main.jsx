@@ -109,11 +109,6 @@ const assets = {
   cameraSticker: new URL('../ai/camera-sticker.webp', import.meta.url).href,
 };
 
-const homepagePriorityImages = [
-  assets.waterPumpSlices[0],
-  assets.btTenMiniExcavatorSlices[0],
-];
-
 const profile = {
   name: '电商视觉设计师',
   role: 'E-commerce Visual Designer / AI-assisted Designer',
@@ -515,6 +510,16 @@ const caseModules = [
   },
 ];
 
+// Keep the detail-page warm-up in the same order as the four homepage cases.
+// Each idle period starts one request only, so this never competes with the
+// homepage's initial rendering or floods the browser with image requests.
+const homepageSecondaryImages = caseModules.flatMap((module) => (
+  projects
+    .filter((project) => project.moduleId === module.id)
+    .flatMap((project) => project.images?.length ? project.images : [project.image])
+    .filter(Boolean)
+));
+
 const websiteProjects = [
   {
     number: '01',
@@ -588,19 +593,31 @@ function App() {
   const [showHomepageLoading, setShowHomepageLoading] = useState(!selectedModule);
 
   useEffect(() => {
-    if (selectedModule) return undefined;
+    if (selectedModule || showHomepageLoading) return undefined;
 
-    const preloadPriorityImages = () => preloadImages(homepagePriorityImages);
-    const idleCallback = window.requestIdleCallback;
+    let cancelled = false;
+    let idleTaskId;
+    let imageIndex = 0;
 
-    if (typeof idleCallback === 'function') {
-      const idleId = idleCallback(preloadPriorityImages, { timeout: 2500 });
-      return () => window.cancelIdleCallback?.(idleId);
-    }
+    const preloadNextImage = () => {
+      if (cancelled || imageIndex >= homepageSecondaryImages.length) return;
 
-    const timeoutId = window.setTimeout(preloadPriorityImages, 1200);
-    return () => window.clearTimeout(timeoutId);
-  }, [selectedModule]);
+      preloadImage(homepageSecondaryImages[imageIndex]);
+      imageIndex += 1;
+      idleTaskId = runWhenIdle(preloadNextImage, 2000);
+    };
+
+    idleTaskId = runWhenIdle(preloadNextImage, 2000);
+
+    return () => {
+      cancelled = true;
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleTaskId);
+      } else {
+        window.clearTimeout(idleTaskId);
+      }
+    };
+  }, [selectedModule, showHomepageLoading]);
 
   useEffect(() => {
     if (selectedModule) return undefined;
