@@ -22,6 +22,24 @@ function getSlices(folderName) {
 }
 
 const imagePreloadCache = new Map();
+const homepageLoadingSessionKey = 'portfolio-home-loading-seen';
+const workLoadingSessionKey = 'portfolio-work-loading-seen';
+
+function hasSessionFlag(key) {
+  try {
+    return window.sessionStorage.getItem(key) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+function setSessionFlag(key) {
+  try {
+    window.sessionStorage.setItem(key, 'true');
+  } catch {
+    // Keep loading functional when browser storage is unavailable.
+  }
+}
 
 function preloadImage(imageUrl) {
   if (!imageUrl || imagePreloadCache.has(imageUrl)) return imagePreloadCache.get(imageUrl);
@@ -510,15 +528,15 @@ const caseModules = [
   },
 ];
 
-// Keep the detail-page warm-up in the same order as the four homepage cases.
-// Each idle period starts one request only, so this never competes with the
-// homepage's initial rendering or floods the browser with image requests.
-const homepageSecondaryImages = caseModules.flatMap((module) => (
-  projects
+// Preload only one visual per case group, in the 01 → 04 homepage order.
+// This gives each detail page a fast opening image without downloading every
+// long-image slice in the background.
+const homepageSecondaryPreviewImages = caseModules
+  .map((module) => projects
     .filter((project) => project.moduleId === module.id)
-    .flatMap((project) => project.images?.length ? project.images : [project.image])
-    .filter(Boolean)
-));
+    .find((project) => project.images?.length || project.image))
+  .map((project) => project?.images?.[0] ?? project?.image)
+  .filter(Boolean);
 
 const websiteProjects = [
   {
@@ -590,7 +608,9 @@ const timeline = [
 function App() {
   const selectedModuleId = new URLSearchParams(window.location.search).get('work');
   const selectedModule = caseModules.find((module) => module.id === selectedModuleId);
-  const [showHomepageLoading, setShowHomepageLoading] = useState(!selectedModule);
+  const [showHomepageLoading, setShowHomepageLoading] = useState(
+    () => !selectedModule && !hasSessionFlag(homepageLoadingSessionKey),
+  );
 
   useEffect(() => {
     if (selectedModule || showHomepageLoading) return undefined;
@@ -600,9 +620,9 @@ function App() {
     let imageIndex = 0;
 
     const preloadNextImage = () => {
-      if (cancelled || imageIndex >= homepageSecondaryImages.length) return;
+      if (cancelled || imageIndex >= homepageSecondaryPreviewImages.length) return;
 
-      preloadImage(homepageSecondaryImages[imageIndex]);
+      preloadImage(homepageSecondaryPreviewImages[imageIndex]);
       imageIndex += 1;
       idleTaskId = runWhenIdle(preloadNextImage, 2000);
     };
@@ -620,7 +640,10 @@ function App() {
   }, [selectedModule, showHomepageLoading]);
 
   useEffect(() => {
-    if (selectedModule) return undefined;
+    if (selectedModule || hasSessionFlag(homepageLoadingSessionKey)) {
+      setShowHomepageLoading(false);
+      return undefined;
+    }
 
     setShowHomepageLoading(true);
     const startedAt = Date.now();
@@ -628,7 +651,10 @@ function App() {
 
     const finishLoading = () => {
       const remainingTime = Math.max(0, 3000 - (Date.now() - startedAt));
-      minimumTimer = window.setTimeout(() => setShowHomepageLoading(false), remainingTime);
+      minimumTimer = window.setTimeout(() => {
+        setSessionFlag(homepageLoadingSessionKey);
+        setShowHomepageLoading(false);
+      }, remainingTime);
     };
 
     if (document.readyState === 'complete') {
@@ -926,16 +952,25 @@ function WorkCategory({ module }) {
   const firstProjectWithImage = moduleProjects.find((project) => project.images?.length || project.image);
   const leadDetailImage = firstProjectWithImage?.images?.[0] ?? firstProjectWithImage?.image;
   const [leadImageReady, setLeadImageReady] = useState(false);
-  const [minimumLoadingElapsed, setMinimumLoadingElapsed] = useState(false);
+  const [minimumLoadingElapsed, setMinimumLoadingElapsed] = useState(
+    () => hasSessionFlag(workLoadingSessionKey),
+  );
   const showLoading = Boolean(leadDetailImage && (!leadImageReady || !minimumLoadingElapsed));
 
   useEffect(() => {
     if (!leadDetailImage) return undefined;
 
-    setLeadImageReady(false);
-    setMinimumLoadingElapsed(false);
+    const shouldShowIntroLoading = !hasSessionFlag(workLoadingSessionKey);
 
-    const minimumTimer = window.setTimeout(() => setMinimumLoadingElapsed(true), 3000);
+    setLeadImageReady(false);
+    setMinimumLoadingElapsed(!shouldShowIntroLoading);
+
+    const minimumTimer = shouldShowIntroLoading
+      ? window.setTimeout(() => {
+        setSessionFlag(workLoadingSessionKey);
+        setMinimumLoadingElapsed(true);
+      }, 3000)
+      : undefined;
     const image = preloadImage(leadDetailImage);
     const markLeadReady = () => setLeadImageReady(true);
 
