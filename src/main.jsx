@@ -744,6 +744,17 @@ function WebsiteProjects() {
   );
 }
 
+function WorkLoading() {
+  return (
+    <main className="workLoading" role="status" aria-live="polite" aria-label="正在加载作品">
+      <div className="workLoadingContent">
+        <span className="workLoadingSpinner" aria-hidden="true" />
+        <p>正在加载作品...</p>
+      </div>
+    </main>
+  );
+}
+
 function ProgressiveSlices({ images, title, startImmediately = false }) {
   const [requestedCount, setRequestedCount] = useState(startImmediately ? 1 : 0);
   const [loadedIndexes, setLoadedIndexes] = useState(() => new Set());
@@ -803,12 +814,6 @@ function ProgressiveSlices({ images, title, startImmediately = false }) {
 
   return (
     <div className="workImage workImage--sliced" ref={containerRef} aria-label={`${title} 完整长图`}>
-      {startImmediately && !loadedIndexes.has(0) && (
-        <div className="workImageLoading" role="status" aria-live="polite">
-          <span className="workImageLoadingSpinner" aria-hidden="true" />
-          <span>正在加载作品...</span>
-        </div>
-      )}
       {images.slice(0, requestedCount).map((image, index) => (
         <a
           className={`workImageSlice${loadedIndexes.has(index) ? ' is-loaded' : ''}`}
@@ -864,6 +869,34 @@ function WorkCategory({ module }) {
   const isMainImageModule = module.id === 'product-main-image';
   const domesticMainProjects = moduleProjects.filter((project) => project.market === 'domestic');
   const internationalMainProjects = moduleProjects.filter((project) => project.market === 'international');
+  const leadDetailImage = isMainImageModule ? null : moduleProjects.find((project) => project.images)?.images[0];
+  const [leadImageReady, setLeadImageReady] = useState(false);
+  const [minimumLoadingElapsed, setMinimumLoadingElapsed] = useState(false);
+  const showLoading = Boolean(leadDetailImage && (!leadImageReady || !minimumLoadingElapsed));
+
+  useEffect(() => {
+    if (!leadDetailImage) return undefined;
+
+    setLeadImageReady(false);
+    setMinimumLoadingElapsed(false);
+
+    const minimumTimer = window.setTimeout(() => setMinimumLoadingElapsed(true), 500);
+    const image = preloadImage(leadDetailImage);
+    const markLeadReady = () => setLeadImageReady(true);
+
+    if (image.complete) {
+      markLeadReady();
+    } else {
+      image.addEventListener('load', markLeadReady, { once: true });
+      image.addEventListener('error', markLeadReady, { once: true });
+    }
+
+    return () => {
+      window.clearTimeout(minimumTimer);
+      image.removeEventListener('load', markLeadReady);
+      image.removeEventListener('error', markLeadReady);
+    };
+  }, [leadDetailImage]);
 
   const returnToPreviousView = () => {
     if (window.history.length > 1) {
@@ -872,6 +905,8 @@ function WorkCategory({ module }) {
     }
     window.location.assign('./');
   };
+
+  if (showLoading) return <WorkLoading />;
 
   return (
     <main className="workPage">
