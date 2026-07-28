@@ -34,7 +34,17 @@ const assets = {
   internationalMainEleven: new URL('../主图/外贸/11.webp', import.meta.url).href,
   internationalMainTwelve: new URL('../主图/外贸/12.webp', import.meta.url).href,
   btMiniExcavator: new URL('../国际站详情页/邦泰-12小挖.webp', import.meta.url).href,
-  btTenMiniExcavator: new URL('../国际站详情页/邦泰-10小挖.webp', import.meta.url).href,
+  btTenMiniExcavatorSlices: [
+    new URL('../国际站详情页/邦泰-10小挖_2_meitu/邦泰-10小挖_1_meitu.webp', import.meta.url).href,
+    new URL('../国际站详情页/邦泰-10小挖_2_meitu/邦泰-10小挖_2_meitu.webp', import.meta.url).href,
+    new URL('../国际站详情页/邦泰-10小挖_2_meitu/邦泰-10小挖_3_meitu.webp', import.meta.url).href,
+    new URL('../国际站详情页/邦泰-10小挖_2_meitu/邦泰-10小挖_4_meitu.webp', import.meta.url).href,
+    new URL('../国际站详情页/邦泰-10小挖_2_meitu/邦泰-10小挖_5_meitu.webp', import.meta.url).href,
+    new URL('../国际站详情页/邦泰-10小挖_2_meitu/邦泰-10小挖_6_meitu.webp', import.meta.url).href,
+    new URL('../国际站详情页/邦泰-10小挖_2_meitu/邦泰-10小挖_7_meitu.webp', import.meta.url).href,
+    new URL('../国际站详情页/邦泰-10小挖_2_meitu/邦泰-10小挖_8_meitu.webp', import.meta.url).href,
+    new URL('../国际站详情页/邦泰-10小挖_2_meitu/邦泰-10小挖_9_meitu.webp', import.meta.url).href,
+  ],
   aonesDrillOne: new URL('../国际站详情页/奥内斯-水井钻机1.webp', import.meta.url).href,
   aonesDrillTwo: new URL('../国际站详情页/奥内斯-水井钻机2.webp', import.meta.url).href,
   aonesBoreholeCamera: new URL('../国际站详情页/奥内斯-井下电视.webp', import.meta.url).href,
@@ -290,7 +300,7 @@ const projects = [
     type: '国际站视觉设计',
     moduleId: 'international-visual',
     platform: '国际站',
-    image: assets.btTenMiniExcavator,
+      images: assets.btTenMiniExcavatorSlices,
     tone: '工程机械',
     summary: '围绕紧凑机身、施工场景与核心配置建立详情页节奏，帮助海外采购方更快识别产品价值。',
     tags: ['工程机械', '卖点提炼', '详情页'],
@@ -765,10 +775,25 @@ function WorkCategory({ module }) {
         <section className="workGallery shell" id="work-content" aria-label={module.title}>
           {moduleProjects.length ? (
           moduleProjects.map((project) => (
-            <article className="workCard" key={project.title}>
-              <a className="workImage" href={project.image} target="_blank" rel="noreferrer">
-                <img src={project.image} alt={project.title} />
-              </a>
+            <article className={`workCard${project.images ? ' workCard--sliced' : ''}`} key={project.title}>
+              {project.images ? (
+                <div className="workImage workImage--sliced" aria-label={`${project.title} 完整长图`}>
+                  {project.images.map((image, index) => (
+                    <a className="workImageSlice" href={image} target="_blank" rel="noreferrer" key={image}>
+                      <img
+                        src={image}
+                        alt={`${project.title}（第 ${index + 1} 段）`}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                      />
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <a className="workImage" href={project.image} target="_blank" rel="noreferrer">
+                  <img src={project.image} alt={project.title} />
+                </a>
+              )}
               <div className="workMeta">
                 <div className="projectLabel">
                   <span>{project.platform}</span>
