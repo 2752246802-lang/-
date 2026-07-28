@@ -9,16 +9,25 @@ import './case-module-refinement.css';
 import './contact-tail-refinement.css';
 
 const secondaryImageModules = import.meta.glob([
-  '../内贸详情页/**/*_meitu.webp',
-  '../国际站详情页/**/*_meitu.webp',
-  '../店铺首页/**/*_meitu.webp',
+  '../optimized-details/high/**/*_meitu.webp',
 ], { eager: true, query: '?url', import: 'default' });
+
+const secondaryPreviewModules = import.meta.glob([
+  '../optimized-details/preview/**/*_meitu.webp',
+], { eager: true, query: '?url', import: 'default' });
+
+const imagePreviewByHighUrl = new Map();
 
 function getSlices(folderName) {
   return Object.entries(secondaryImageModules)
     .filter(([filePath]) => filePath.includes(`/${folderName}/`))
     .sort(([firstPath], [secondPath]) => firstPath.localeCompare(secondPath, 'zh-CN', { numeric: true }))
-    .map(([, imageUrl]) => imageUrl);
+    .map(([filePath, imageUrl]) => {
+      const previewPath = filePath.replace('/high/', '/preview/');
+      const previewUrl = secondaryPreviewModules[previewPath];
+      if (previewUrl) imagePreviewByHighUrl.set(imageUrl, previewUrl);
+      return imageUrl;
+    });
 }
 
 const imagePreloadCache = new Map();
@@ -902,7 +911,18 @@ function ProgressiveSlices({ images, title, startImmediately = false }) {
           rel="noreferrer"
           key={image}
         >
+          {imagePreviewByHighUrl.get(image) && (
+            <img
+              className="workImagePreview"
+              src={imagePreviewByHighUrl.get(image)}
+              alt=""
+              aria-hidden="true"
+              decoding="async"
+              fetchPriority={index === 0 ? 'high' : 'low'}
+            />
+          )}
           <img
+            className="workImageFull"
             src={image}
             alt={`${title}（第 ${index + 1} 段）`}
             loading={index === 0 ? 'eager' : 'lazy'}
