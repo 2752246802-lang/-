@@ -585,6 +585,7 @@ const timeline = [
 function App() {
   const selectedModuleId = new URLSearchParams(window.location.search).get('work');
   const selectedModule = caseModules.find((module) => module.id === selectedModuleId);
+  const [showHomepageLoading, setShowHomepageLoading] = useState(!selectedModule);
 
   useEffect(() => {
     if (selectedModule) return undefined;
@@ -601,12 +602,37 @@ function App() {
     return () => window.clearTimeout(timeoutId);
   }, [selectedModule]);
 
+  useEffect(() => {
+    if (selectedModule) return undefined;
+
+    setShowHomepageLoading(true);
+    const startedAt = Date.now();
+    let minimumTimer;
+
+    const finishLoading = () => {
+      const remainingTime = Math.max(0, 500 - (Date.now() - startedAt));
+      minimumTimer = window.setTimeout(() => setShowHomepageLoading(false), remainingTime);
+    };
+
+    if (document.readyState === 'complete') {
+      finishLoading();
+    } else {
+      window.addEventListener('load', finishLoading, { once: true });
+    }
+
+    return () => {
+      window.removeEventListener('load', finishLoading);
+      window.clearTimeout(minimumTimer);
+    };
+  }, [selectedModule]);
+
   if (selectedModule) {
     return <WorkCategory module={selectedModule} />;
   }
 
   return (
     <main>
+      {showHomepageLoading && <HomepageLoading />}
       <Hero assets={assets} profile={profile} stats={stats} />
       <Profile />
       <Projects />
@@ -752,6 +778,17 @@ function WorkLoading() {
         <p>正在加载作品...</p>
       </div>
     </main>
+  );
+}
+
+function HomepageLoading() {
+  return (
+    <div className="homepageLoading" role="status" aria-live="polite" aria-label="正在加载首页">
+      <div className="homepageLoadingContent">
+        <span className="homepageLoadingSpinner" aria-hidden="true" />
+        <span>正在加载作品集...</span>
+      </div>
+    </div>
   );
 }
 

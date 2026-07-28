@@ -328,6 +328,9 @@ p, h1, h2, h3, figure { margin: 0; }
 .workLoading { min-height: 100dvh; display: grid; place-items: center; background: #f5f5f5; color: #171817; }
 .workLoadingContent { display: grid; justify-items: center; gap: 16px; font-size: 13px; letter-spacing: .08em; }
 .workLoadingSpinner { width: 34px; height: 34px; border: 2px solid #c7c8c3; border-top-color: var(--accent); border-radius: 50%; animation: workLoadingSpin .8s linear infinite; }
+.homepageLoading { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; background: rgb(18 19 18 / 72%); color: #f5f5f2; }
+.homepageLoadingContent { display: grid; justify-items: center; gap: 16px; font-size: 13px; letter-spacing: .08em; }
+.homepageLoadingSpinner { width: 34px; height: 34px; border: 2px solid rgb(245 245 242 / 36%); border-top-color: var(--accent); border-radius: 50%; animation: workLoadingSpin .8s linear infinite; }
 @keyframes workLoadingSpin { to { transform: rotate(360deg); } }
 .workMeta { padding-top: 20px; }
 .projectLabel { display: flex; gap: 12px; color: var(--accent); font-size: 11px; letter-spacing: .08em; }
